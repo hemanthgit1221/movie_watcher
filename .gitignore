@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+*.db
+*.sqlite
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Playwright
+watcher/playwright_data/
+playwright-report/
+test-results/
+
+# Testing reports
+testing/reports/*
+!testing/reports/.gitkeep
+testing/synthetic_pages/generated/
+
+# Secrets
+*.pem
+firebase-sa.json
+google-services.json
+GoogleService-Info.plist
+
+# Flutter
+mobile/fdfs_alert/.dart_tool/
+mobile/fdfs_alert/.flutter-plugins
+mobile/fdfs_alert/.flutter-plugins-dependencies
+mobile/fdfs_alert/build/
+mobile/fdfs_alert/ios/Pods/
+mobile/fdfs_alert/android/.gradle/
+moovaa/.dart_tool/
+moovaa/build/
+moovaa/.flutter-plugins
+moovaa/.flutter-plugins-dependencies
+
+# Next.js admin
+admin/node_modules/
+admin/.next/
+
+# Local runtime / scratch
+logs/
+firebase-debug.log
+changes/
+
+# Local toolchains (Flutter SDK clone)
+.tools/
+
+# Hemanth mirror build scratch (see scripts/push-hemanth.ps1)
+.hemanth-mirror-worktree/
+
+# Cursor IDE (local plans, rules, agent state — never commit)
+.cursor
+.cursor/
+**/.cursor/
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

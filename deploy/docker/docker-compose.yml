@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: moovaa
+      POSTGRES_PASSWORD: moovaa
+      POSTGRES_DB: moovaa
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moovaa -d moovaa"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://moovaa:moovaa@postgres:5432/moovaa
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: docker-dev-secret-change-in-prod
+      ADMIN_JWT_SECRET: docker-admin-secret-change-in-prod
+      FCM_USE_QUEUE: "true"
+      FCM_ENABLED: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  notification_worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api
+    command: python -m notification_worker.main
+    environment:
+      DATABASE_URL: postgresql+asyncpg://moovaa:moovaa@postgres:5432/moovaa
+      REDIS_URL: redis://redis:6379/0
+      FCM_ENABLED: "false"
+    depends_on:
+      - postgres
+      - redis
+
+  watcher:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.watcher
+    environment:
+      DATABASE_URL: postgresql+asyncpg://moovaa:moovaa@postgres:5432/moovaa
+      REDIS_URL: redis://redis:6379/0
+      DRY_RUN: "true"
+      FCM_USE_QUEUE: "true"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:

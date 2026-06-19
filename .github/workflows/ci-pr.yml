@@ -1,0 +1,84 @@
+name: CI PR
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./backend[dev] -e ./watcher -e ./testing
+
+      - name: Install Playwright Chromium (Phase 5 exit gates)
+        run: playwright install chromium
+
+      - name: Backend tests
+        run: pytest backend/tests -q
+
+      - name: Watcher tests (Phase 4 — no browser in CI)
+        working-directory: watcher
+        run: pytest tests -q
+
+      - name: Orchestration tests (Phase 5)
+        env:
+          PHASE5_CONCURRENT_SOAK_SEC: "90"
+        run: pytest testing/orchestration -q
+
+      - name: Detector regression + gate suites (Phase 6)
+        run: pytest testing/regression testing/false_positive testing/false_negative testing/synthetic_pages -q
+
+      - name: Compare detectors harness (Phase 6)
+        run: python testing/compare_detectors.py || true
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install packages (harness + stub gate)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./backend[dev] -e ./watcher -e ./testing
+
+      - name: Detector regression (fixtures + stub)
+        run: pytest testing/regression -q
+
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/fdfs_alert
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Ensure platform folders
+        run: flutter create . --project-name fdfs_alert --org com.fdfsalert
+        # Adds android/ios if missing; keeps existing lib/ when present
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Flutter test
+        run: flutter test
